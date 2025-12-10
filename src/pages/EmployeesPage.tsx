@@ -1,17 +1,24 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { UserPlus, Download } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { EmployeeTable } from '@/components/employees/EmployeeTable';
+import { EmployeeDetailDialog } from '@/components/employees/EmployeeDetailDialog';
 import { Button } from '@/components/ui/button';
 import { mockEmployees } from '@/data/mockData';
 import { toast } from 'sonner';
+import { Employee } from '@/types/attendance';
 
 const EmployeesPage = () => {
-  const handleViewEmployee = (employee: any) => {
-    toast.info(`Viendo perfil de ${employee.name}`);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleViewEmployee = (employee: Employee) => {
+    setSelectedEmployee(employee);
+    setDialogOpen(true);
   };
 
-  const handleContactEmployee = (employee: any) => {
+  const handleContactEmployee = (employee: Employee) => {
     toast.info(`Contactando a ${employee.name}`);
   };
 
@@ -55,6 +62,13 @@ const EmployeesPage = () => {
           />
         </motion.div>
       </div>
+
+      {/* Employee Detail Dialog */}
+      <EmployeeDetailDialog
+        employee={selectedEmployee}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </MainLayout>
   );
 };

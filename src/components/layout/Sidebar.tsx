@@ -12,7 +12,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Building2
+  Building2,
+  FileCheck,
+  UserPlus,
+  Book
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,8 +26,11 @@ const menuItems = [
   { icon: Users, label: 'Empleados', path: '/employees' },
   { icon: Clock, label: 'Asistencia', path: '/attendance' },
   { icon: Building2, label: 'Departamentos', path: '/departments' },
+  { icon: FileCheck, label: 'Contratos', path: '/contracts' },
+  { icon: UserPlus, label: 'Requerimientos', path: '/requirements' },
   { icon: MessageSquare, label: 'Mensajes', path: '/messages' },
   { icon: BarChart3, label: 'Reportes', path: '/reports' },
+  { icon: Book, label: 'Reglamento', path: '/regulations' },
   { icon: Settings, label: 'Configuración', path: '/settings' },
 ];
 

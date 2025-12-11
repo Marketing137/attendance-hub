@@ -8,6 +8,9 @@ import UploadPage from "./pages/UploadPage";
 import EmployeesPage from "./pages/EmployeesPage";
 import AttendancePage from "./pages/AttendancePage";
 import DepartmentsPage from "./pages/DepartmentsPage";
+import ContractsPage from "./pages/ContractsPage";
+import RequirementsPage from "./pages/RequirementsPage";
+import RegulationsPage from "./pages/RegulationsPage";
 import MessagesPage from "./pages/MessagesPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -27,6 +30,9 @@ const App = () => (
           <Route path="/employees" element={<EmployeesPage />} />
           <Route path="/attendance" element={<AttendancePage />} />
           <Route path="/departments" element={<DepartmentsPage />} />
+          <Route path="/contracts" element={<ContractsPage />} />
+          <Route path="/requirements" element={<RequirementsPage />} />
+          <Route path="/regulations" element={<RegulationsPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

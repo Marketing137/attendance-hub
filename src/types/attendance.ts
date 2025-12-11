@@ -24,6 +24,10 @@ export interface Employee {
   email?: string;
   phone?: string;
   avatar?: string;
+  hireDate?: string;
+  contractType?: ContractType;
+  contractEndDate?: string;
+  status?: 'active' | 'inactive' | 'on_leave';
 }
 
 export interface AttendanceRecord {
@@ -104,4 +108,63 @@ export interface UploadedReport {
   periodEnd: string;
   recordCount: number;
   status: 'processing' | 'completed' | 'error';
+}
+
+export type ContractType = 'indefinido' | 'plazo_fijo' | 'tiempo_parcial' | 'practicas' | 'locacion';
+
+export interface EmployeeContract {
+  id: string;
+  employeeId: string;
+  type: ContractType;
+  startDate: string;
+  endDate?: string;
+  salary: number;
+  position: string;
+  department: Department;
+  status: 'active' | 'expired' | 'pending_renewal';
+  probationEndDate?: string;
+  documentsComplete: boolean;
+}
+
+export type RequirementPriority = 'alta' | 'media' | 'baja';
+export type RequirementStatus = 'pending' | 'approved' | 'rejected' | 'in_process' | 'completed';
+
+export interface PersonnelRequirement {
+  id: string;
+  department: Department;
+  requestedBy: string;
+  position: string;
+  quantity: number;
+  justification: string;
+  priority: RequirementPriority;
+  status: RequirementStatus;
+  createdAt: string;
+  approvedAt?: string;
+  approvedBy?: string;
+  requirements: string[];
+  salaryRange?: { min: number; max: number };
+  contractType: ContractType;
+}
+
+export type SanctionType = 'verbal_warning' | 'written_warning' | 'suspension' | 'dismissal';
+export type InfractionLevel = 'leve' | 'grave' | 'muy_grave';
+
+export interface Sanction {
+  id: string;
+  employeeId: string;
+  type: SanctionType;
+  infractionLevel: InfractionLevel;
+  description: string;
+  regulationArticle: string;
+  date: string;
+  appliedBy: string;
+  daysOfSuspension?: number;
+  status: 'active' | 'appealed' | 'revoked';
+}
+
+export interface RegulationArticle {
+  number: string;
+  title: string;
+  content: string;
+  category: 'generalidades' | 'admision' | 'derechos_empleador' | 'derechos_colaborador' | 'jornada' | 'ausencias' | 'remuneraciones' | 'descansos' | 'faltas_sanciones';
 }

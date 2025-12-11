@@ -1,21 +1,137 @@
-import { Employee, AttendanceRecord, AttendanceMessage, Department, DepartmentStats, UploadedReport } from '@/types/attendance';
+import { Employee, AttendanceRecord, AttendanceMessage, Department, DepartmentStats, UploadedReport, EmployeeContract, PersonnelRequirement, Sanction, RegulationArticle } from '@/types/attendance';
 
 export const mockEmployees: Employee[] = [
-  { id: '1', documentId: '75670401', name: 'Aracely Reque', department: 'comercial', position: 'Ejecutiva de Ventas' },
-  { id: '2', documentId: '70862865', name: 'Lesly Lopez', department: 'comercial', position: 'Asistente Comercial' },
-  { id: '3', documentId: '73870722', name: 'Zuleica Roque', department: 'marketing', position: 'Community Manager' },
-  { id: '4', documentId: '76801962', name: 'Christian Maldon', department: 'ti', position: 'Desarrollador Frontend' },
-  { id: '5', documentId: '71717084', name: 'Andrea Paz', department: 'soporte', position: 'Agente de Soporte' },
-  { id: '6', documentId: '74394191', name: 'Leonardo Minaya', department: 'ti', position: 'DevOps Engineer' },
-  { id: '7', documentId: '72491674', name: 'Alejandra Quispe', department: 'campanas', position: 'Coordinadora de Campañas' },
-  { id: '8', documentId: '76749877', name: 'Daniel Castillo', department: 'digitalcollege', position: 'Instructor' },
-  { id: '9', documentId: '72868766', name: 'Alejandro Barrientos', department: 'soporte', position: 'Supervisor de Soporte' },
-  { id: '10', documentId: '75083276', name: 'Luis Manrique', department: 'marketing', position: 'Diseñador Gráfico' },
-  { id: '11', documentId: '72209631', name: 'Miluska Mendivil', department: 'comercial', position: 'Gerente Comercial' },
-  { id: '12', documentId: '76077253', name: 'Angel Plasencia', department: 'ti', position: 'Backend Developer' },
-  { id: '13', documentId: '72976894', name: 'Angheli Trujillo', department: 'campanas', position: 'Ejecutiva de Campañas' },
-  { id: '14', documentId: '71161185', name: 'Celeste Ramos', department: 'digitalcollege', position: 'Coordinadora Académica' },
-  { id: '15', documentId: '73335122', name: 'Jazmin Ledesma', department: 'soporte', position: 'Agente Senior' },
+  { id: '1', documentId: '75670401', name: 'Aracely Reque', department: 'comercial', position: 'Ejecutiva de Ventas', email: 'aracely.reque@empresa.com', phone: '987654321', hireDate: '2023-03-15', contractType: 'indefinido', status: 'active' },
+  { id: '2', documentId: '70862865', name: 'Lesly Lopez', department: 'comercial', position: 'Asistente Comercial', email: 'lesly.lopez@empresa.com', phone: '987654322', hireDate: '2024-01-10', contractType: 'plazo_fijo', contractEndDate: '2025-01-10', status: 'active' },
+  { id: '3', documentId: '73870722', name: 'Zuleica Roque', department: 'marketing', position: 'Community Manager', email: 'zuleica.roque@empresa.com', phone: '987654323', hireDate: '2022-06-01', contractType: 'indefinido', status: 'active' },
+  { id: '4', documentId: '76801962', name: 'Christian Maldon', department: 'ti', position: 'Desarrollador Frontend', email: 'christian.maldon@empresa.com', phone: '987654324', hireDate: '2023-09-01', contractType: 'indefinido', status: 'active' },
+  { id: '5', documentId: '71717084', name: 'Andrea Paz', department: 'soporte', position: 'Agente de Soporte', email: 'andrea.paz@empresa.com', phone: '987654325', hireDate: '2024-06-01', contractType: 'practicas', contractEndDate: '2025-06-01', status: 'active' },
+  { id: '6', documentId: '74394191', name: 'Leonardo Minaya', department: 'ti', position: 'DevOps Engineer', email: 'leonardo.minaya@empresa.com', phone: '987654326', hireDate: '2022-01-15', contractType: 'indefinido', status: 'active' },
+  { id: '7', documentId: '72491674', name: 'Alejandra Quispe', department: 'campanas', position: 'Coordinadora de Campañas', email: 'alejandra.quispe@empresa.com', phone: '987654327', hireDate: '2023-04-01', contractType: 'indefinido', status: 'active' },
+  { id: '8', documentId: '76749877', name: 'Daniel Castillo', department: 'digitalcollege', position: 'Instructor', email: 'daniel.castillo@empresa.com', phone: '987654328', hireDate: '2024-02-15', contractType: 'tiempo_parcial', status: 'active' },
+  { id: '9', documentId: '72868766', name: 'Alejandro Barrientos', department: 'soporte', position: 'Supervisor de Soporte', email: 'alejandro.barrientos@empresa.com', phone: '987654329', hireDate: '2021-08-01', contractType: 'indefinido', status: 'active' },
+  { id: '10', documentId: '75083276', name: 'Luis Manrique', department: 'marketing', position: 'Diseñador Gráfico', email: 'luis.manrique@empresa.com', phone: '987654330', hireDate: '2023-11-01', contractType: 'plazo_fijo', contractEndDate: '2024-11-01', status: 'active' },
+  { id: '11', documentId: '72209631', name: 'Miluska Mendivil', department: 'comercial', position: 'Gerente Comercial', email: 'miluska.mendivil@empresa.com', phone: '987654331', hireDate: '2020-03-01', contractType: 'indefinido', status: 'active' },
+  { id: '12', documentId: '76077253', name: 'Angel Plasencia', department: 'ti', position: 'Backend Developer', email: 'angel.plasencia@empresa.com', phone: '987654332', hireDate: '2024-03-01', contractType: 'plazo_fijo', contractEndDate: '2025-03-01', status: 'active' },
+  { id: '13', documentId: '72976894', name: 'Angheli Trujillo', department: 'campanas', position: 'Ejecutiva de Campañas', email: 'angheli.trujillo@empresa.com', phone: '987654333', hireDate: '2023-07-15', contractType: 'indefinido', status: 'active' },
+  { id: '14', documentId: '71161185', name: 'Celeste Ramos', department: 'digitalcollege', position: 'Coordinadora Académica', email: 'celeste.ramos@empresa.com', phone: '987654334', hireDate: '2022-09-01', contractType: 'indefinido', status: 'active' },
+  { id: '15', documentId: '73335122', name: 'Jazmin Ledesma', department: 'soporte', position: 'Agente Senior', email: 'jazmin.ledesma@empresa.com', phone: '987654335', hireDate: '2021-05-01', contractType: 'indefinido', status: 'active' },
+];
+
+export const mockContracts: EmployeeContract[] = [
+  { id: 'c1', employeeId: '1', type: 'indefinido', startDate: '2023-03-15', salary: 2500, position: 'Ejecutiva de Ventas', department: 'comercial', status: 'active', probationEndDate: '2023-06-15', documentsComplete: true },
+  { id: 'c2', employeeId: '2', type: 'plazo_fijo', startDate: '2024-01-10', endDate: '2025-01-10', salary: 1800, position: 'Asistente Comercial', department: 'comercial', status: 'active', documentsComplete: true },
+  { id: 'c3', employeeId: '3', type: 'indefinido', startDate: '2022-06-01', salary: 2800, position: 'Community Manager', department: 'marketing', status: 'active', documentsComplete: true },
+  { id: 'c4', employeeId: '4', type: 'indefinido', startDate: '2023-09-01', salary: 4500, position: 'Desarrollador Frontend', department: 'ti', status: 'active', documentsComplete: true },
+  { id: 'c5', employeeId: '5', type: 'practicas', startDate: '2024-06-01', endDate: '2025-06-01', salary: 1200, position: 'Agente de Soporte', department: 'soporte', status: 'active', documentsComplete: false },
+  { id: 'c6', employeeId: '6', type: 'indefinido', startDate: '2022-01-15', salary: 5500, position: 'DevOps Engineer', department: 'ti', status: 'active', documentsComplete: true },
+  { id: 'c7', employeeId: '10', type: 'plazo_fijo', startDate: '2023-11-01', endDate: '2024-11-01', salary: 2200, position: 'Diseñador Gráfico', department: 'marketing', status: 'pending_renewal', documentsComplete: true },
+  { id: 'c8', employeeId: '12', type: 'plazo_fijo', startDate: '2024-03-01', endDate: '2025-03-01', salary: 4000, position: 'Backend Developer', department: 'ti', status: 'active', documentsComplete: true },
+];
+
+export const mockRequirements: PersonnelRequirement[] = [
+  {
+    id: 'r1',
+    department: 'ti',
+    requestedBy: 'Jefe TI - Carlos Ruiz',
+    position: 'Desarrollador Full Stack',
+    quantity: 2,
+    justification: 'Incremento de proyectos y necesidad de ampliar el equipo de desarrollo para cumplir con los plazos de entrega.',
+    priority: 'alta',
+    status: 'approved',
+    createdAt: '2024-11-15T10:00:00Z',
+    approvedAt: '2024-11-20T14:00:00Z',
+    approvedBy: 'Gerencia General',
+    requirements: ['3+ años de experiencia', 'React/Node.js', 'Trabajo en equipo'],
+    salaryRange: { min: 4000, max: 6000 },
+    contractType: 'indefinido',
+  },
+  {
+    id: 'r2',
+    department: 'comercial',
+    requestedBy: 'Gerente Comercial',
+    position: 'Ejecutivo de Ventas',
+    quantity: 3,
+    justification: 'Expansión del área comercial para nuevas zonas de cobertura.',
+    priority: 'media',
+    status: 'pending',
+    createdAt: '2024-12-01T09:00:00Z',
+    requirements: ['Experiencia en ventas', 'Licencia de conducir', 'Disponibilidad para viajar'],
+    salaryRange: { min: 2000, max: 3000 },
+    contractType: 'plazo_fijo',
+  },
+  {
+    id: 'r3',
+    department: 'soporte',
+    requestedBy: 'Supervisor de Soporte',
+    position: 'Agente de Soporte Técnico',
+    quantity: 1,
+    justification: 'Reemplazo por renuncia del colaborador anterior.',
+    priority: 'alta',
+    status: 'in_process',
+    createdAt: '2024-11-28T11:00:00Z',
+    approvedAt: '2024-11-30T10:00:00Z',
+    approvedBy: 'RRHH',
+    requirements: ['Conocimiento técnico', 'Atención al cliente', 'Inglés intermedio'],
+    salaryRange: { min: 1500, max: 2000 },
+    contractType: 'indefinido',
+  },
+  {
+    id: 'r4',
+    department: 'digitalcollege',
+    requestedBy: 'Coordinadora Académica',
+    position: 'Instructor de Marketing Digital',
+    quantity: 1,
+    justification: 'Nuevo curso de marketing digital requiere instructor especializado.',
+    priority: 'baja',
+    status: 'pending',
+    createdAt: '2024-12-05T14:00:00Z',
+    requirements: ['Certificación en marketing digital', 'Experiencia docente', 'Portafolio de casos'],
+    salaryRange: { min: 2500, max: 3500 },
+    contractType: 'tiempo_parcial',
+  },
+];
+
+export const mockSanctions: Sanction[] = [
+  {
+    id: 's1',
+    employeeId: '5',
+    type: 'verbal_warning',
+    infractionLevel: 'leve',
+    description: 'Tardanza reiterada sin justificación (Art. 50 - Llegar tarde a su centro de trabajo)',
+    regulationArticle: 'Art. 50',
+    date: '2024-11-20',
+    appliedBy: 'RRHH',
+    status: 'active',
+  },
+  {
+    id: 's2',
+    employeeId: '8',
+    type: 'written_warning',
+    infractionLevel: 'grave',
+    description: 'Incumplimiento de actividades asignadas (Art. 50 - Faltas Graves)',
+    regulationArticle: 'Art. 50',
+    date: '2024-11-25',
+    appliedBy: 'Jefe de Área',
+    status: 'active',
+  },
+];
+
+export const mockRegulations: RegulationArticle[] = [
+  { number: 'Art. 19', title: 'Jornada de Trabajo', content: 'La jornada ordinaria de trabajo es: Lunes a viernes de 09:00 a 13:00 y de 14:00 a 18:00. Sábado de 09:00 a 13:00 (4 horas laborales). Los horarios pueden ser modificados respetando las 48 horas laborables por semana.', category: 'jornada' },
+  { number: 'Art. 20', title: 'Horario de Refrigerio', content: 'El horario de refrigerio es de sesenta (60) minutos diariamente, de 13:00 a 14:00 horas.', category: 'jornada' },
+  { number: 'Art. 22', title: 'Registro de Asistencia', content: 'El colaborador está obligado a registrar su asistencia de forma personal. Las tardanzas en jornadas virtuales también son consideradas cuando no se asiste a la hora pactada.', category: 'jornada' },
+  { number: 'Art. 24', title: 'Ausencias', content: 'Las ausencias originan incumplimiento de la principal obligación del colaborador y relevan a la empresa de abonar la remuneración correspondiente, salvo casos excepcionales de ley.', category: 'ausencias' },
+  { number: 'Art. 25', title: 'Permisos', content: 'Permiso es la autorización escrita para ausentarse momentáneamente, con cargo a compensar las horas dejadas de laborar. Requiere aviso de 48 horas de anticipación.', category: 'ausencias' },
+  { number: 'Art. 28', title: 'Licencias con Goce', content: 'Licencias con goce: Por enfermedad, maternidad, fallecimiento familiar (3 días, extensible a 6 si es en provincia), capacitación, citación judicial/policial.', category: 'ausencias' },
+  { number: 'Art. 36', title: 'Vacaciones', content: 'El colaborador tiene derecho a 15 días calendario de descanso vacacional remunerado al año, por cada año completo de servicios.', category: 'descansos' },
+  { number: 'Art. 39', title: 'Definición de Falta', content: 'Toda acción u omisión que signifique incumplimiento del reglamento, órdenes o directivas se considerará falta que da origen a sanción.', category: 'faltas_sanciones' },
+  { number: 'Art. 41', title: 'Tipos de Sanciones', content: 'Las sanciones pueden ser: Amonestación verbal, Amonestación escrita, Suspensión sin goce de remuneraciones, Despido.', category: 'faltas_sanciones' },
+  { number: 'Art. 42', title: 'Amonestación Verbal', content: 'Se aplica cuando la falta es primaria, leve y no reviste gravedad. A cargo de RRHH o jefe inmediato.', category: 'faltas_sanciones' },
+  { number: 'Art. 43', title: 'Amonestación Escrita', content: 'Se aplica en casos de faltas graves. La suspensión sin goce aplica cuando la falta es muy grave pero no amerita despido.', category: 'faltas_sanciones' },
+  { number: 'Art. 50', title: 'Clasificación de Faltas', content: 'Faltas leves: Tardanzas, uso de celular para fines no laborales, no usar uniforme, dejar equipos encendidos. Faltas graves: Disminución intencional del trabajo, dormir en horario laboral. Muy graves: Alterar registros de asistencia, marcar asistencia de otro, faltar el respeto.', category: 'faltas_sanciones' },
+  { number: 'Art. 9', title: 'Período de Prueba', content: 'Los tres primeros meses de servicio serán considerados como periodo de prueba, salvo estipulación contractual distinta.', category: 'admision' },
+  { number: 'Art. 8', title: 'Requisitos de Ingreso', content: 'Requisitos: CV documentado, copia de DNI o Carnet de Extranjería, comprobante de domicilio, antecedente policial o Certijoven, examen médico laboral.', category: 'admision' },
 ];
 
 export const mockAttendanceRecords: AttendanceRecord[] = mockEmployees.flatMap((emp, index) => {
@@ -82,6 +198,18 @@ export const mockMessages: AttendanceMessage[] = [
     readAt: new Date().toISOString(),
     replied: true,
   },
+  {
+    id: '3',
+    fromUserId: 'hr-1',
+    fromUserName: 'RRHH',
+    toUserId: 'manager-soporte',
+    toUserName: 'Supervisor de Soporte',
+    department: 'soporte',
+    subject: 'Requerimiento de personal aprobado',
+    message: 'Se ha aprobado el requerimiento de 1 Agente de Soporte Técnico. Por favor coordinar el proceso de selección.',
+    createdAt: new Date(Date.now() - 172800000).toISOString(),
+    readAt: new Date(Date.now() - 86400000).toISOString(),
+  },
 ];
 
 export const mockDepartmentStats: DepartmentStats[] = [
@@ -115,3 +243,25 @@ export const mockUploadedReports: UploadedReport[] = [
     status: 'completed',
   },
 ];
+
+export const CONTRACT_TYPES: Record<string, { name: string; color: string }> = {
+  indefinido: { name: 'Indefinido', color: 'hsl(142 76% 36%)' },
+  plazo_fijo: { name: 'Plazo Fijo', color: 'hsl(38 92% 50%)' },
+  tiempo_parcial: { name: 'Tiempo Parcial', color: 'hsl(217 91% 50%)' },
+  practicas: { name: 'Prácticas', color: 'hsl(262 83% 58%)' },
+  locacion: { name: 'Locación de Servicios', color: 'hsl(188 94% 43%)' },
+};
+
+export const REQUIREMENT_STATUS: Record<string, { name: string; color: string }> = {
+  pending: { name: 'Pendiente', color: 'hsl(38 92% 50%)' },
+  approved: { name: 'Aprobado', color: 'hsl(142 76% 36%)' },
+  rejected: { name: 'Rechazado', color: 'hsl(0 84% 60%)' },
+  in_process: { name: 'En Proceso', color: 'hsl(217 91% 50%)' },
+  completed: { name: 'Completado', color: 'hsl(188 94% 43%)' },
+};
+
+export const PRIORITY_LEVELS: Record<string, { name: string; color: string }> = {
+  alta: { name: 'Alta', color: 'hsl(0 84% 60%)' },
+  media: { name: 'Media', color: 'hsl(38 92% 50%)' },
+  baja: { name: 'Baja', color: 'hsl(142 76% 36%)' },
+};

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Dialog,
   DialogContent,
@@ -34,20 +34,24 @@ import {
   Printer,
   Download,
   AlertCircle,
-  History
+  History,
+  ArrowLeft
 } from 'lucide-react';
 import { Employee, AttendanceRecord, DEPARTMENTS, EmployeeContract, Sanction } from '@/types/attendance';
 import { mockAttendanceRecords, mockContracts, mockSanctions, CONTRACT_TYPES } from '@/data/mockData';
 import { toast } from 'sonner';
+import { EmployeeEditForm } from './EmployeeEditForm';
 
 interface EmployeeDetailDialogProps {
   employee: Employee | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEmployeeUpdate?: (employee: Employee, contract?: Partial<EmployeeContract>) => void;
 }
 
-export function EmployeeDetailDialog({ employee, open, onOpenChange }: EmployeeDetailDialogProps) {
+export function EmployeeDetailDialog({ employee, open, onOpenChange, onEmployeeUpdate }: EmployeeDetailDialogProps) {
   const [activeTab, setActiveTab] = useState('info');
+  const [isEditing, setIsEditing] = useState(false);
 
   const stats = useMemo(() => {
     if (!employee) return null;
@@ -111,7 +115,19 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange }: EmployeeD
   };
 
   const handleEditEmployee = () => {
-    toast.info('Función de edición próximamente');
+    setIsEditing(true);
+  };
+
+  const handleSaveEmployee = (updatedEmployee: Employee, updatedContract?: Partial<EmployeeContract>) => {
+    if (onEmployeeUpdate) {
+      onEmployeeUpdate(updatedEmployee, updatedContract);
+    }
+    setIsEditing(false);
+    toast.success('Información del empleado actualizada correctamente');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
   };
 
   const handleSendMessage = () => {
@@ -146,21 +162,58 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange }: EmployeeD
   const daysUntilEnd = contract?.endDate ? getDaysUntilContractEnd(contract.endDate) : null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!open) setIsEditing(false);
+      onOpenChange(open);
+    }}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="sr-only">Perfil del Empleado</DialogTitle>
+          <DialogTitle className="sr-only">
+            {isEditing ? 'Editar Empleado' : 'Perfil del Empleado'}
+          </DialogTitle>
         </DialogHeader>
         
-        {/* Profile Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col sm:flex-row items-start gap-4 pb-4"
-        >
-          <Avatar className="h-20 w-20">
-            <AvatarFallback 
-              className="text-2xl font-bold"
+        <AnimatePresence mode="wait">
+          {isEditing ? (
+            <motion.div
+              key="edit-form"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-3 pb-2">
+                <Button variant="ghost" size="icon" onClick={handleCancelEdit}>
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <div>
+                  <h2 className="text-xl font-bold">Editar Empleado</h2>
+                  <p className="text-sm text-muted-foreground">{employee.name}</p>
+                </div>
+              </div>
+              <EmployeeEditForm
+                employee={employee}
+                contract={contract}
+                onSave={handleSaveEmployee}
+                onCancel={handleCancelEdit}
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="view-mode"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+            >
+              {/* Profile Header */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex flex-col sm:flex-row items-start gap-4 pb-4"
+              >
+                <Avatar className="h-20 w-20">
+                  <AvatarFallback 
+                    className="text-2xl font-bold"
               style={{ backgroundColor: `${dept.color}20`, color: dept.color }}
             >
               {getInitials(employee.name)}
@@ -681,7 +734,10 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange }: EmployeeD
               </div>
             </motion.div>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </DialogContent>
     </Dialog>
   );

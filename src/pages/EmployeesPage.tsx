@@ -7,9 +7,10 @@ import { EmployeeDetailDialog } from '@/components/employees/EmployeeDetailDialo
 import { Button } from '@/components/ui/button';
 import { mockEmployees } from '@/data/mockData';
 import { toast } from 'sonner';
-import { Employee } from '@/types/attendance';
+import { Employee, EmployeeContract } from '@/types/attendance';
 
 const EmployeesPage = () => {
+  const [employees, setEmployees] = useState<Employee[]>(mockEmployees);
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -20,6 +21,14 @@ const EmployeesPage = () => {
 
   const handleContactEmployee = (employee: Employee) => {
     toast.info(`Contactando a ${employee.name}`);
+  };
+
+  const handleEmployeeUpdate = (updatedEmployee: Employee, updatedContract?: Partial<EmployeeContract>) => {
+    setEmployees(prev => 
+      prev.map(emp => emp.id === updatedEmployee.id ? updatedEmployee : emp)
+    );
+    setSelectedEmployee(updatedEmployee);
+    // En una implementación real, aquí guardarías en la base de datos
   };
 
   return (
@@ -56,7 +65,7 @@ const EmployeesPage = () => {
           transition={{ delay: 0.1 }}
         >
           <EmployeeTable 
-            employees={mockEmployees}
+            employees={employees}
             onViewEmployee={handleViewEmployee}
             onContactEmployee={handleContactEmployee}
           />
@@ -68,6 +77,7 @@ const EmployeesPage = () => {
         employee={selectedEmployee}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
+        onEmployeeUpdate={handleEmployeeUpdate}
       />
     </MainLayout>
   );

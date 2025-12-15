@@ -12,6 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { 
   User, 
   Building2, 
@@ -35,12 +36,14 @@ import {
   Download,
   AlertCircle,
   History,
-  ArrowLeft
+  ArrowLeft,
+  Scale
 } from 'lucide-react';
 import { Employee, AttendanceRecord, DEPARTMENTS, EmployeeContract, Sanction } from '@/types/attendance';
 import { mockAttendanceRecords, mockContracts, mockSanctions, CONTRACT_TYPES } from '@/data/mockData';
 import { toast } from 'sonner';
 import { EmployeeEditForm } from './EmployeeEditForm';
+import { SanctionForm } from './SanctionForm';
 
 interface EmployeeDetailDialogProps {
   employee: Employee | null;
@@ -52,6 +55,8 @@ interface EmployeeDetailDialogProps {
 export function EmployeeDetailDialog({ employee, open, onOpenChange, onEmployeeUpdate }: EmployeeDetailDialogProps) {
   const [activeTab, setActiveTab] = useState('info');
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddingSanction, setIsAddingSanction] = useState(false);
+  const [localSanctions, setLocalSanctions] = useState<Sanction[]>([]);
 
   const stats = useMemo(() => {
     if (!employee) return null;
@@ -87,8 +92,10 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange, onEmployeeU
 
   const sanctions = useMemo(() => {
     if (!employee) return [];
-    return mockSanctions.filter(s => s.employeeId === employee.id);
-  }, [employee]);
+    const existing = mockSanctions.filter(s => s.employeeId === employee.id);
+    const local = localSanctions.filter(s => s.employeeId === employee.id);
+    return [...existing, ...local];
+  }, [employee, localSanctions]);
 
   if (!employee || !stats) return null;
 
@@ -143,7 +150,20 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange, onEmployeeU
   };
 
   const handleApplySanction = () => {
-    toast.info('Abriendo formulario de sanción');
+    setIsAddingSanction(true);
+  };
+
+  const handleSanctionSubmit = (sanctionData: Omit<Sanction, 'id'>) => {
+    const newSanction: Sanction = {
+      ...sanctionData,
+      id: `s-${Date.now()}`,
+    };
+    setLocalSanctions(prev => [...prev, newSanction]);
+    setIsAddingSanction(false);
+  };
+
+  const handleCancelSanction = () => {
+    setIsAddingSanction(false);
   };
 
   const StatItem = ({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color?: string }) => (
@@ -163,18 +183,49 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange, onEmployeeU
 
   return (
     <Dialog open={open} onOpenChange={(open) => {
-      if (!open) setIsEditing(false);
+      if (!open) {
+        setIsEditing(false);
+        setIsAddingSanction(false);
+      }
       onOpenChange(open);
     }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="sr-only">
-            {isEditing ? 'Editar Empleado' : 'Perfil del Empleado'}
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>
+            {isEditing ? 'Editar Empleado' : isAddingSanction ? 'Registrar Sanción' : 'Perfil del Empleado'}
           </DialogTitle>
         </DialogHeader>
         
+        <ScrollArea className="max-h-[85vh] p-6">
+        
         <AnimatePresence mode="wait">
-          {isEditing ? (
+          {isAddingSanction ? (
+            <motion.div
+              key="sanction-form"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-4"
+            >
+              <div className="flex items-center gap-3 pb-2">
+                <Button variant="ghost" size="icon" onClick={handleCancelSanction}>
+                  <ArrowLeft className="w-4 h-4" />
+                </Button>
+                <div>
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <Scale className="w-5 h-5 text-destructive" />
+                    Registrar Sanción
+                  </h2>
+                  <p className="text-sm text-muted-foreground">Basado en el Reglamento Interno de Trabajo</p>
+                </div>
+              </div>
+              <SanctionForm
+                employee={employee}
+                onSubmit={handleSanctionSubmit}
+                onCancel={handleCancelSanction}
+              />
+            </motion.div>
+          ) : isEditing ? (
             <motion.div
               key="edit-form"
               initial={{ opacity: 0, x: 20 }}
@@ -738,6 +789,7 @@ export function EmployeeDetailDialog({ employee, open, onOpenChange, onEmployeeU
             </motion.div>
           )}
         </AnimatePresence>
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

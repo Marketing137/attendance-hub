@@ -160,6 +160,10 @@ export interface Sanction {
   appliedBy: string;
   daysOfSuspension?: number;
   status: 'active' | 'appealed' | 'revoked';
+  notes?: string;
+  tardyMinutes?: number;
+  compensationDate?: string;
+  medicalDocumentPresented?: boolean;
 }
 
 export interface RegulationArticle {

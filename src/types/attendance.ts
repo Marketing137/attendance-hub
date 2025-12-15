@@ -149,6 +149,20 @@ export interface PersonnelRequirement {
 export type SanctionType = 'verbal_warning' | 'written_warning' | 'suspension' | 'dismissal';
 export type InfractionLevel = 'leve' | 'grave' | 'muy_grave';
 
+export type TardyCategory = 'on_time' | 'range_1' | 'range_2' | 'range_3';
+
+export interface TardyDiscount {
+  category: TardyCategory;
+  arrivalTime: string;
+  discountAmount: number;
+  compensationMinutes: number;
+  isJustified: boolean;
+  justifiedBy?: string;
+  justificationReason?: string;
+  compensationCompleted: boolean;
+  compensationDate?: string;
+}
+
 export interface Sanction {
   id: string;
   employeeId: string;
@@ -159,11 +173,12 @@ export interface Sanction {
   date: string;
   appliedBy: string;
   daysOfSuspension?: number;
-  status: 'active' | 'appealed' | 'revoked';
+  status: 'active' | 'appealed' | 'revoked' | 'justified';
   notes?: string;
   tardyMinutes?: number;
   compensationDate?: string;
   medicalDocumentPresented?: boolean;
+  tardyDiscount?: TardyDiscount;
 }
 
 export interface RegulationArticle {

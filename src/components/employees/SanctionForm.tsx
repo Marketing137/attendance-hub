@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { AlertTriangle, FileText, Clock, Heart, Calendar, User, Scale } from 'lucide-react';
+import { AlertTriangle, FileText, Clock, Heart, Calendar, User, Scale, DollarSign, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -11,9 +11,30 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Employee, Sanction, InfractionLevel, SanctionType } from '@/types/attendance';
+import { Switch } from '@/components/ui/switch';
+import { Employee, Sanction, InfractionLevel, SanctionType, TardyCategory, TardyDiscount } from '@/types/attendance';
 import { mockRegulations } from '@/data/mockData';
 import { toast } from '@/hooks/use-toast';
+
+// Tardiness discount rules
+const TARDY_RULES: Record<TardyCategory, { label: string; timeRange: string; discount: number; compensation: number }> = {
+  on_time: { label: 'A tiempo', timeRange: '≤ 09:05', discount: 0, compensation: 0 },
+  range_1: { label: '09:06 - 09:29', timeRange: '09:06 - 09:29', discount: 10, compensation: 30 },
+  range_2: { label: '09:30 - 09:59', timeRange: '09:30 - 09:59', discount: 20, compensation: 60 },
+  range_3: { label: '10:00 en adelante', timeRange: '≥ 10:00', discount: 30, compensation: 90 },
+};
+
+const calculateTardyCategory = (arrivalTime: string): TardyCategory => {
+  if (!arrivalTime) return 'on_time';
+  const [hours, minutes] = arrivalTime.split(':').map(Number);
+  const totalMinutes = hours * 60 + minutes;
+  const baseTime = 9 * 60; // 09:00
+  
+  if (totalMinutes <= baseTime + 5) return 'on_time'; // ≤ 09:05
+  if (totalMinutes <= baseTime + 29) return 'range_1'; // 09:06 - 09:29
+  if (totalMinutes <= baseTime + 59) return 'range_2'; // 09:30 - 09:59
+  return 'range_3'; // ≥ 10:00
+};
 
 const sanctionFormSchema = z.object({
   infractionLevel: z.enum(['leve', 'grave', 'muy_grave'] as const, {
@@ -25,8 +46,13 @@ const sanctionFormSchema = z.object({
   regulationArticle: z.string().min(1, 'Seleccione el artículo del reglamento'),
   incidentDate: z.string().min(1, 'Ingrese la fecha del incidente'),
   description: z.string().min(10, 'La descripción debe tener al menos 10 caracteres').max(500, 'Máximo 500 caracteres'),
+  arrivalTime: z.string().optional(),
   tardyMinutes: z.number().optional(),
   compensationDate: z.string().optional(),
+  compensationCompleted: z.boolean().optional(),
+  isJustified: z.boolean().optional(),
+  justifiedBy: z.string().optional(),
+  justificationReason: z.string().optional(),
   medicalDocument: z.boolean().optional(),
   notes: z.string().max(300, 'Máximo 300 caracteres').optional(),
 });
@@ -102,8 +128,13 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
       regulationArticle: '',
       incidentDate: new Date().toISOString().split('T')[0],
       description: '',
+      arrivalTime: '',
       tardyMinutes: undefined,
       compensationDate: undefined,
+      compensationCompleted: false,
+      isJustified: false,
+      justifiedBy: '',
+      justificationReason: '',
       medicalDocument: false,
       notes: '',
     },
@@ -111,13 +142,29 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
 
   const watchedLevel = form.watch('infractionLevel');
   const watchedArticle = form.watch('regulationArticle');
+  const watchedArrivalTime = form.watch('arrivalTime');
+  const watchedIsJustified = form.watch('isJustified');
+  const watchedCompensationCompleted = form.watch('compensationCompleted');
+
+  // Calculate tardy category and discount automatically
+  const tardyInfo = useMemo(() => {
+    if (!watchedArrivalTime) return null;
+    const category = calculateTardyCategory(watchedArrivalTime);
+    return { category, ...TARDY_RULES[category] };
+  }, [watchedArrivalTime]);
+
+  // Calculate final discount (0 if justified or compensated)
+  const finalDiscount = useMemo(() => {
+    if (!tardyInfo || tardyInfo.category === 'on_time') return 0;
+    if (watchedIsJustified || watchedCompensationCompleted) return 0;
+    return tardyInfo.discount;
+  }, [tardyInfo, watchedIsJustified, watchedCompensationCompleted]);
 
   const handleLevelChange = (level: InfractionLevel) => {
     setSelectedLevel(level);
     form.setValue('infractionLevel', level);
     form.setValue('sanctionType', undefined as any);
     
-    // Check if tardiness-related
     setShowTardyFields(false);
     setShowHealthFields(false);
   };
@@ -125,7 +172,6 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
   const handleArticleChange = (article: string) => {
     form.setValue('regulationArticle', article);
     
-    // Show specific fields based on article
     const isTardyRelated = article.toLowerCase().includes('tardanza') || article.includes('Art. 22');
     const isHealthRelated = article.toLowerCase().includes('salud') || article.toLowerCase().includes('ausencia');
     
@@ -134,6 +180,18 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
   };
 
   const handleSubmit = (data: SanctionFormData) => {
+    const tardyDiscount: TardyDiscount | undefined = tardyInfo && tardyInfo.category !== 'on_time' ? {
+      category: tardyInfo.category,
+      arrivalTime: data.arrivalTime || '',
+      discountAmount: finalDiscount,
+      compensationMinutes: tardyInfo.compensation,
+      isJustified: data.isJustified || false,
+      justifiedBy: data.justifiedBy,
+      justificationReason: data.justificationReason,
+      compensationCompleted: data.compensationCompleted || false,
+      compensationDate: data.compensationDate,
+    } : undefined;
+
     const newSanction: Omit<Sanction, 'id'> = {
       employeeId: employee.id,
       type: data.sanctionType,
@@ -142,14 +200,24 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
       regulationArticle: data.regulationArticle,
       date: data.incidentDate,
       appliedBy: 'RRHH',
-      status: 'active',
+      status: data.isJustified || data.compensationCompleted ? 'justified' : 'active',
       notes: data.notes,
+      tardyMinutes: data.tardyMinutes,
+      compensationDate: data.compensationDate,
+      tardyDiscount,
     };
 
     onSubmit(newSanction);
+    
+    const discountMessage = tardyDiscount 
+      ? finalDiscount > 0 
+        ? ` Descuento aplicado: S/ ${finalDiscount}.00`
+        : ' Sin descuento (justificado/compensado)'
+      : '';
+    
     toast({
       title: 'Sanción registrada',
-      description: `Se ha aplicado ${SANCTION_TYPES[data.sanctionType].name} a ${employee.name}`,
+      description: `Se ha aplicado ${SANCTION_TYPES[data.sanctionType].name} a ${employee.name}.${discountMessage}`,
     });
   };
 
@@ -171,6 +239,49 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
               </p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Discount Rules Table */}
+      <Card className="border-primary/30">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <DollarSign className="h-4 w-4" />
+            Tabla de Descuentos por Tardanza
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-2 px-2">Rango de Hora</th>
+                  <th className="text-center py-2 px-2">Descuento</th>
+                  <th className="text-center py-2 px-2">Compensación</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-dashed">
+                  <td className="py-2 px-2">09:06 - 09:29</td>
+                  <td className="text-center py-2 px-2 font-semibold text-amber-600">S/ 10.00</td>
+                  <td className="text-center py-2 px-2">30 min</td>
+                </tr>
+                <tr className="border-b border-dashed">
+                  <td className="py-2 px-2">09:30 - 09:59</td>
+                  <td className="text-center py-2 px-2 font-semibold text-orange-600">S/ 20.00</td>
+                  <td className="text-center py-2 px-2">1 hora</td>
+                </tr>
+                <tr>
+                  <td className="py-2 px-2">10:00 en adelante</td>
+                  <td className="text-center py-2 px-2 font-semibold text-destructive">S/ 30.00</td>
+                  <td className="text-center py-2 px-2">+1 hora (admin)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">
+            * La compensación solo puede realizarse el mismo día o día siguiente, máximo 1 vez por semana.
+          </p>
         </CardContent>
       </Card>
 
@@ -338,15 +449,180 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
           {showTardyFields && (
             <Card className="border-amber-500/30 bg-amber-500/5">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Detalles de Tardanza</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Cálculo de Descuento por Tardanza
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
+                {/* Arrival Time Input */}
+                <FormField
+                  control={form.control}
+                  name="arrivalTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hora de llegada del colaborador</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="time" 
+                          {...field}
+                          className="bg-background"
+                        />
+                      </FormControl>
+                      <FormDescription>Ingrese la hora exacta de llegada (formato 24h)</FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Automatic Discount Calculation Display */}
+                {tardyInfo && tardyInfo.category !== 'on_time' && (
+                  <Card className={`border-2 ${finalDiscount > 0 ? 'border-destructive/50 bg-destructive/5' : 'border-green-500/50 bg-green-500/5'}`}>
+                    <CardContent className="pt-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-5 w-5" />
+                          <span className="font-semibold">Cálculo Automático</span>
+                        </div>
+                        <Badge variant={finalDiscount > 0 ? 'destructive' : 'default'} className={finalDiscount === 0 ? 'bg-green-500' : ''}>
+                          {finalDiscount > 0 ? `Descuento: S/ ${finalDiscount}.00` : 'Sin Descuento'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-muted-foreground">Rango detectado:</p>
+                          <p className="font-medium">{tardyInfo.label}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground">Compensación requerida:</p>
+                          <p className="font-medium">{tardyInfo.compensation} min</p>
+                        </div>
+                      </div>
+
+                      {finalDiscount === 0 && (watchedIsJustified || watchedCompensationCompleted) && (
+                        <div className="mt-3 flex items-center gap-2 text-green-600">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="text-sm">
+                            {watchedIsJustified ? 'Justificado por jefe de área' : 'Compensación completada'}
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Separator />
+
+                {/* Justification Section */}
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="isJustified"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>¿Justificado por jefe de área?</FormLabel>
+                          <FormDescription>
+                            El jefe de área puede justificar la tardanza y evitar el descuento
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {watchedIsJustified && (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="justifiedBy"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nombre del jefe que justifica</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="Ej: Juan Pérez - Jefe Comercial" 
+                                {...field}
+                                className="bg-background"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="justificationReason"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Motivo de justificación</FormLabel>
+                            <FormControl>
+                              <Textarea 
+                                placeholder="Describa el motivo por el cual se justifica la tardanza..." 
+                                {...field}
+                                rows={2}
+                                className="bg-background resize-none"
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Compensation Section */}
+                <div className="space-y-3">
+                  <FormField
+                    control={form.control}
+                    name="compensationCompleted"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center justify-between rounded-lg border p-3 shadow-sm">
+                        <div className="space-y-0.5">
+                          <FormLabel>¿Compensación completada?</FormLabel>
+                          <FormDescription>
+                            El colaborador compensó el tiempo de tardanza
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                      </FormItem>
+                    )}
+                  />
+
+                  {watchedCompensationCompleted && (
+                    <FormField
+                      control={form.control}
+                      name="compensationDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fecha de compensación</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} className="bg-background" />
+                          </FormControl>
+                          <FormDescription>Solo mismo día o día siguiente, máx 1 vez/semana</FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                  )}
+                </div>
+
                 <FormField
                   control={form.control}
                   name="tardyMinutes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Minutos de tardanza</FormLabel>
+                      <FormLabel>Minutos totales de tardanza</FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -357,19 +633,6 @@ export function SanctionForm({ employee, onSubmit, onCancel }: SanctionFormProps
                         />
                       </FormControl>
                       <FormDescription>Tiempo de tardanza sobre los 5 min de tolerancia</FormDescription>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="compensationDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Fecha de compensación (si aplica)</FormLabel>
-                      <FormControl>
-                        <Input type="date" {...field} className="bg-background" />
-                      </FormControl>
-                      <FormDescription>Solo 1 vez por semana, coordinar con jefe</FormDescription>
                     </FormItem>
                   )}
                 />

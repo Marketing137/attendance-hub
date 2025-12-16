@@ -15,7 +15,8 @@ import {
   Building2,
   FileCheck,
   UserPlus,
-  Book
+  Book,
+  Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -27,6 +28,7 @@ const menuItems = [
   { icon: Clock, label: 'Asistencia', path: '/attendance' },
   { icon: Building2, label: 'Departamentos', path: '/departments' },
   { icon: FileCheck, label: 'Contratos', path: '/contracts' },
+  { icon: Wallet, label: 'Boletas de Pago', path: '/payroll' },
   { icon: UserPlus, label: 'Requerimientos', path: '/requirements' },
   { icon: MessageSquare, label: 'Mensajes', path: '/messages' },
   { icon: BarChart3, label: 'Reportes', path: '/reports' },

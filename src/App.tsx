@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import UploadPage from "./pages/UploadPage";
 import EmployeesPage from "./pages/EmployeesPage";
@@ -15,6 +17,7 @@ import MessagesPage from "./pages/MessagesPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import PayrollPage from "./pages/PayrollPage";
+import AuthPage from "./pages/AuthPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,21 +28,80 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/upload" element={<UploadPage />} />
-          <Route path="/employees" element={<EmployeesPage />} />
-          <Route path="/attendance" element={<AttendancePage />} />
-          <Route path="/departments" element={<DepartmentsPage />} />
-          <Route path="/contracts" element={<ContractsPage />} />
-          <Route path="/requirements" element={<RequirementsPage />} />
-          <Route path="/regulations" element={<RegulationsPage />} />
-          <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/reports" element={<ReportsPage />} />
-          <Route path="/payroll" element={<PayrollPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Public route */}
+            <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Protected routes - all authenticated users */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/attendance" element={
+              <ProtectedRoute>
+                <AttendancePage />
+              </ProtectedRoute>
+            } />
+            <Route path="/messages" element={
+              <ProtectedRoute>
+                <MessagesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/regulations" element={
+              <ProtectedRoute>
+                <RegulationsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/payroll" element={
+              <ProtectedRoute>
+                <PayrollPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin and Jefe only routes */}
+            <Route path="/employees" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh', 'jefe_area']}>
+                <EmployeesPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/departments" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh', 'jefe_area']}>
+                <DepartmentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/contracts" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh', 'jefe_area']}>
+                <ContractsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/requirements" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh', 'jefe_area']}>
+                <RequirementsPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Admin only routes */}
+            <Route path="/upload" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh']}>
+                <UploadPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/reports" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh']}>
+                <ReportsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute allowedRoles={['admin_rrhh']}>
+                <SettingsPage />
+              </ProtectedRoute>
+            } />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
